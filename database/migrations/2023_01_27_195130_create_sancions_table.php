@@ -21,6 +21,7 @@ return new class extends Migration
             $table->unsignedBigInteger('usuario_id')->index('sancions_usuario_id_foreign');
             $table->timestamps();
             $table->softDeletes();
+            $table->string('Bibliotecario', 65);
         });
     }
 

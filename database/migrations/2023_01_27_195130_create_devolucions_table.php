@@ -23,7 +23,6 @@ return new class extends Migration
             $table->unsignedBigInteger('curso_id')->nullable()->index('devolucions_curso_id_foreign');
             $table->timestamps();
             $table->softDeletes();
-            $table->string('Novedades', 120);
             $table->enum('Estado_Devolucion', ['Activa', 'Inactiva'])->default('Activa');
             $table->integer('Cantidad_Devuelta');
             $table->unsignedBigInteger('prestador_id')->nullable()->index('devolucions_bibliotecario_id_foreign');

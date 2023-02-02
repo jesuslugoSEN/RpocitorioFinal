@@ -9,7 +9,7 @@
             <div class="row m-3  d-flex ">
 
 
-                <div class="col-9">
+                <div class="col-8">
                     <!--------LINICIO LINKS TABS -------->
                     <ul class="nav nav-tabs mt-2" id="myTab" role="tablist">
 
@@ -90,7 +90,7 @@
 
                     </div>
 
-                    <div class="col-sm-3 col-12 card p-2 h-50  ">
+                    <div class="col-sm-4 col-12 card p-2 h-50  ">
                         <!------Formulario de prestamo------>
 
                        @include('livewire.elementos.formularioprestamo')

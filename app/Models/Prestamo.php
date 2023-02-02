@@ -14,7 +14,7 @@ class Prestamo extends Model
 
     protected $table = 'prestamos';
 
-    protected $fillable = ['Fecha_prestamo','CantidadPrestada','libros_id','elementos_id','usuario_id','prestador_id','Estado_Prestamo'];
+    protected $fillable = ['Fecha_prestamo','CantidadPrestada','libros_id','elementos_id','usuario_id','prestador_id','Estado_Prestamo','Codigo_Prestamo'];
 	
     /**
      * @return \Illuminate\Database\Eloquent\Relations\HasOne

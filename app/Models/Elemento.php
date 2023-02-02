@@ -15,7 +15,7 @@ class Elemento extends Model
 
     protected $table = 'elementos';
 
-    protected $fillable = ['nombre','cantidad','descripcion','Estado','categoria_id'];
+    protected $fillable = ['nombre','cantidad','descripcion','Estado','categoria_id','TipoNovedad','created_at','updated_at','deleted_at','NovedadesElemento'];
 	
     /**
      * @return \Illuminate\Database\Eloquent\Relations\HasOne

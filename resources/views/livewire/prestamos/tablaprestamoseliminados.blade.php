@@ -63,8 +63,11 @@
                                 @endif
 
 
-
+                               
                             <td
+                            
+                              
+                            
 
                             colspan="3" class="d-flex justify-content-around">
 
@@ -91,7 +94,7 @@
                     @endforelse
                 </tbody>
             </table>
-            <div class="float-end">{{ $prestamosEliminados->links() }}</div>
+           
         </div>
     </div>
 

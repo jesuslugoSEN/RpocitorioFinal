@@ -4,21 +4,7 @@
 
 
 
-    @if (session()->has('alertaprestamow'))
-        <div wire:poll.7s class="alert alert-info alert-dismissible fade show" role="alert">
-
-            <strong>
-                <p class="small">{{ session('alertaprestamow') }}</p>
-            </strong>
-        </div>
-
-        <script>
-            var alertList = document.querySelectorAll('.alert');
-            alertList.forEach(function(alert) {
-                new bootstrap.Alert(alert)
-            })
-        </script>
-    @endif
+   @include('Alertas.Alertas')
 
 
 
@@ -77,6 +63,9 @@
                     </span>
                 @enderror
             </div>
+            <label for="exampleFormControlTextarea1" class="form-label">Novedades</label>
+            <textarea class="form-control @error('Novedades') is-invalid @enderror" id="exampleFormControlTextarea1"
+                wire:model.defer="NovedadesElemento" cols="1" rows="3" disabled></textarea>
 
 
             <div class="col-12 d-flex justify-content-around ">

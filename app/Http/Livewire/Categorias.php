@@ -10,7 +10,9 @@ class Categorias extends Component
 {
     use WithPagination;
 
+protected $listeners = ['destroy' => 'destroy' ,'inactivarCategoria' => 'eliminarTotalMente'];
 
+    
 
 	protected $paginationTheme = 'bootstrap';
     public $selected_id, $buscarCategoria, $nombre, $descripcion, $Estado,$Tipo;
@@ -120,6 +122,9 @@ public function inactivarCategoria($id){
 		$this->Estado = $categoria-> Estado;
 
     }
+//evitar Inactivar Categoria
+
+
 
 
     //Actualizar los datos de la categoria
@@ -153,7 +158,7 @@ public function inactivarCategoria($id){
             $this->dispatchBrowserEvent('swal', [
     'title' => 'Categoria Actualizada Con exito.',
     'icon'=>'success',
-    'iconColor'=>'green',
+   
 ]);
         }
 
@@ -165,25 +170,48 @@ public function inactivarCategoria($id){
     {
 
 
-        $categoria = Categoria::find($id);
+        $categoria = Categoria::where('id',$id)->with('libros','elementos')->first();
 
-        if($categoria->Estado == 'Activa' ){
-            $categoria->Estado = 'Inactiva';
-
-            $categoria->save();
-            $categoria->delete();
+        if($categoria->libros->count() > 0 ){
+            $this->dispatchBrowserEvent('swal', [
+                'title' => 'No se puede Inactivar la Categoria, tiene libros asociados.',
+                'icon'=>'error',
+                'iconColor'=>'red',
+            ]);
+        }elseif($categoria->elementos->count() > 0){
 
             $this->dispatchBrowserEvent('swal', [
-                'title' => 'Categoria Inactivada Con Exito..',
-                'icon'=>'info',
-                'iconColor'=>'blue',
+                'title' => 'No se puede Inactivar la Categoria, tiene elementos asociados.',
+                'icon'=>'error',
+                'iconColor'=>'red',
+                'timer'=> 5000,
+                'toast'=> true,
+                'position'=> 'center',
+                'showConfirmButton'=> false,
+                
             ]);
+        }
+        else{
+                $categoria->Estado == 'Activa' ;
+                $categoria->Estado = 'Inactiva';
+    
+                $categoria->save();
+                $categoria->delete();
+    
+                $this->dispatchBrowserEvent('swal', [
+                    'title' => 'Categoria Inactivada Con Exito..',
+                    'icon'=>'success',
+                   
+                ]);
+        }
+
+        
 
 
     }
 
 
-    }
+    
 
 //Restaurar Categoria Eliminada
 
@@ -199,7 +227,7 @@ public function inactivarCategoria($id){
         $this->dispatchBrowserEvent('swal', [
             'title' => 'Categoria Restaurada Con Exito...',
             'icon'=>'success',
-            'iconColor'=>'green',
+            
         ]);
 
     }
@@ -236,14 +264,63 @@ public function inactivarCategoria($id){
 
         $this->resetInput();
 
-        $this->dispatchBrowserEvent('swal', [
-            'title' => 'Categoria creada con exito...',
+        $this->dispatchBrowserEvent('crear', [
+            'type' => 'success',
+            'title' => 'Categoria Creada Con Exito...',
             'icon'=>'success',
-            'iconColor'=>'green',
+            
         ]);
 
     }
 
+    public function eliminarTotalmenteC($id){
+
+
+        $this->dispatchBrowserEvent('eliminarT', [
+            'type' => 'warning',
+            'title' => '¿Estas Seguro De Eliminar La Categoria?',
+            'id' => $id,
+            
+        ]);
+      }
+
+
+    
+public function eliminar($id){
+
+    $this->selected_id = $id;
+    $categoria = Categoria::where('id',$id)->with('libros','elementos')->first();
+
+    if($categoria->libros->count() > 0 ){
+        $this->dispatchBrowserEvent('swal', [
+            'title' => 'No se puede Inactivar la Categoria, tiene libros asociados.',
+            'icon'=>'error',
+            'iconColor'=>'red',
+        ]);
+    }elseif($categoria->elementos->count() > 0){
+
+        $this->dispatchBrowserEvent('swal', [
+            'title' => 'No se puede Inactivar la Categoria, tiene elementos asociados.',
+            'icon'=>'error',
+            'iconColor'=>'red',
+            'timer'=> 5000,
+            'toast'=> true,
+            'position'=> 'center',
+            'showConfirmButton'=> false,
+            
+        ]);
+    }else{
+
+    
+    $this->dispatchBrowserEvent('eliminar', [
+        'type' => 'warning',
+        'title' => '¿Estas Seguro De Eliminar La Categoria?',
+        'id' => $id,
+        
+    ]);
+  }
+    
+}
 
 
 

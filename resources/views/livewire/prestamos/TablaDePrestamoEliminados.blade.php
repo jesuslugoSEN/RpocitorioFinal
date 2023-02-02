@@ -90,7 +90,7 @@
                     @endforelse
                 </tbody>
             </table>
-            <div class="float-end">{{ $prestamos->links() }}</div>
+          
         </div>
     </div>
 

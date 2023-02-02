@@ -95,7 +95,7 @@
                 </div>
 
               
-                <div class="col-3 mt-4 card p-2 h-50  ">
+                <div class="col-3 mt-3 card p-2 h-50  ">
                     <!------Formulario de Devolucion------>
     
                     

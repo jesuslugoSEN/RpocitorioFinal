@@ -3,6 +3,8 @@
 namespace App\Http\Livewire;
 
 use App\Models\Libro;
+use App\Models\Prestamos\DetallePrestamo;
+use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use App\Models\Elemento;
 use App\Models\Prestamo;
@@ -11,21 +13,21 @@ use App\Models\Devolucion;
 use Livewire\WithPagination;
 use Illuminate\Foundation\Auth\User;
 use Illuminate\Support\Facades\Auth;
-
+//SELECT detalle_prestamo.CantidaPrestadaU,prestamos.CantidadPrestada,prestamos.NombreBibliotecario,libros.Nombre,libros.NombreTomo,libros.Novedades,elementos.nombre,elementos.NovedadesElemento,users.name,users.lastname,prestamos.Estado_Prestamo,prestamos.id from detalle_prestamo LEFT join prestamos on detalle_prestamo.id_prestamo=prestamos.id LEFT JOIN libros on detalle_prestamo.id_libro=libros.id LEFT join elementos on detalle_prestamo.id_elemento = elementos.id INNER join users on prestamos.usuario_id=users.id;
 class Prestamos extends Component
 {
     use WithPagination;
 
     protected $listeners = ['render' => 'render'];
-
+    public $datos = [];
     protected $paginationTheme = 'bootstrap';
     public $prestamos_id, $CantidadPrestamo, $Estado_Prestamo, $cambiarEstado;
     public $selected_id, $buscadorPrestamos, $Fecha_prestamo, $libros_id, $elementos_id, $usuario_id, $curso_id, $CantidadPrestada, $ArticuloPrestado;
     public $usuarioDeudor, $prestador_id, $bibliotecario, $articuloDevolver, $CantidadPrestadaDevolver, $usuarioDeudorD, $NovedadesDevolucion, $CantidadDevuelta;
 
-    public $detalleElemento, $cantidadPrestadaDetalle, $fechaDetalle, $nombreDeudor, $apellidoDeudor, $gradoDeudor, $numeroiDeudor, $tipoDocDeudor, $celularDeudor, $direccionDeudor, $estadoDetalle,$Tipo_novedad;
+    public $consultaLibrosElementos,$detalleElemento, $cantidadPrestadaDetalle, $fechaDetalle, $nombreDeudor, $apellidoDeudor, $gradoDeudor, $numeroiDeudor, $tipoDocDeudor, $celularDeudor, $direccionDeudor, $estadoDetalle,$Tipo_novedad;
 
-
+public $arrayElementosPrestados,$op,$datosDevolucion;
 
     public function render()
     {
@@ -35,19 +37,21 @@ class Prestamos extends Component
 
         $buscadorPrestamos = '%' . $this->buscadorPrestamos . '%';
 
-        $consultaLibrosElementos = Prestamo::select('prestamos.*', 'libros.id', 'libros.Nombre', 'elementos.id', 'users.id', 'users.name', 'elementos.nombre', 'prestamos.id')
-            ->leftJoin('libros', 'libros.id', '=', 'prestamos.libros_id')
-            ->leftJoin('elementos', 'elementos.id', '=', 'prestamos.elementos_id')
-            ->leftJoin('users', 'users.id', '=', 'prestamos.usuario_id')
-            ->orderBy('prestamos.id', 'desc')
-            ->where('Estado_Prestamo', "=", 'Activo')
-            ->orWhere('libros.Nombre', 'LIKE', $buscadorPrestamos)
-            ->orWhere('users.name', 'LIKE', $buscadorPrestamos)
-            ->orWhere('elementos.nombre', 'LIKE', $buscadorPrestamos)
 
-            ->paginate(10)
+        $arrayElementosPrestados = DetallePrestamo::all()->groupby('id_prestamo');
+
+        
+        $consultaPrestamos = Prestamo::select('prestamos.*','users.name','users.lastname')
+        ->leftjoin('users','prestamos.usuario_id','=','users.id')
+        ->where('prestamos.Estado_Prestamo', 'Activo')
+        ->get();
+            
         ;
 
+    
+
+        
+        
 
 
 
@@ -56,47 +60,18 @@ class Prestamos extends Component
 
         return view('livewire.prestamos.vistaprestamos', [
             'prestamos' => Prestamo::latest()
-                ->orWhere('libros_id', 'LIKE', $buscadorPrestamos)
-                ->orWhere('elementos_id', 'LIKE', $buscadorPrestamos)
-                ->orWhere('usuario_id', 'LIKE', $buscadorPrestamos)
+                
 
                 ->paginate(8),
-        ], compact('consultaUsuariosPrestamos', 'prestamosEliminados', 'consultaLibrosElementos'));
+        ], compact('consultaUsuariosPrestamos', 'prestamosEliminados', 'consultaPrestamos','arrayElementosPrestados'));
 
 
 
 
     }
-    /*
-    $prestamos = Prestamo::select('prestamos.id','elementos.*','libros.*')
+   
 
-    ->join('elementos','elementos.id','=','prestamos.elementos_id')
-    ->join('libros','libros.id','=','prestamos.libros_id')
-    ->get();
-    return view('livewire.prestamos.vistaprestamos', [
-    'prestamos' => Prestamo::latest()
-    ->orWhere('Fecha_prestamo', 'LIKE', $buscadorPrestamos)
-    ->orWhere('libros_id', 'LIKE', $buscadorPrestamos)
-    ->orWhere('elementos_id', 'LIKE', $buscadorPrestamos)
-    ->orWhere('usuario_id', 'LIKE', $buscadorPrestamos)
-    ->orWhere('curso_id', 'LIKE', $buscadorPrestamos)
-    ->paginate(8),
-    ],compact('consultaUsuariosPrestamos','prestamosEliminados'));
-
-
-    $prestamos = Prestamo::select('prestamos.id','prestamos.CantidadPrestada','prestamos.Fecha_prestamo','prestamos.Estado_Prestamo','prestamos.elementos_id','prestamos.Fecha_prestamo','prestamos.Estado_Prestamo','prestamos.usuario_id','prestamos.elementos_id','prestamos.prestador_id','elementos.nombre','libros.Nombre')
-    ->join('elementos','elementos.id','=','prestamos.elementos_id')
-    ->join('libros','libros.id','=','prestamos.libros_id')
-    ->where('prestamos.Estado_Prestamo','=','Activo')
-    ->orderBy('prestamos.id','desc')
-    ->orWhere('Fecha_prestamo','LIKE','%'.$this->buscadorPrestamos)
-
-
-
-    ->orWhere('CantidadPrestada','LIKE','%'.$this->buscadorPrestamos.'%')
-
-
-    ->paginate(5);*/
+   
 
 
     public function cancel()
@@ -208,7 +183,72 @@ class Prestamos extends Component
     }
 
 
+public function productosPrestados($id){
 
+    
+    $arrayElementosPrestados = DetallePrestamo::select('prestamos.*','libros.*','elementos.*','detalle_prestamo.*','users.name','users.lastname')
+    ->join
+('prestamos', 'prestamos.id', '=', 'detalle_prestamo.id_prestamo')
+    ->leftjoin('libros', 'libros.id', '=', 'detalle_prestamo.id_libro')
+  
+->leftjoin('users', 'users.id', '=', 'prestamos.usuario_id')
+    ->leftjoin('elementos', 'elementos.id', '=', 'detalle_prestamo.id_elemento')
+    ->where('detalle_prestamo.id_prestamo', $id)->get();
+    $this->arrayElementosPrestados = $arrayElementosPrestados;
+    
+    
+
+        foreach ($arrayElementosPrestados as $key => $value) {
+
+            $datos = array(
+
+                
+                "id_elemento" => $value['id_elemento'],
+                "Tipo_Elemento" => $value['Tipo_Elemento'],
+                "Estado_Prestamo" => $value['Estado_Prestamo'],
+                "NombreTomo" => $value['NombreTomo'],   
+
+                "nombre"=> $value['nombre'],
+                "CantidaPrestadaU" => $value['CantidaPrestadaU'],
+                "Nombre" => $value['Nombre'],
+                "CantidadPrestada" => $value['CantidadPrestada'],
+                "NovedadesPrestamoU" => $value['NovedadesPrestamoU'],
+                "TipoNovedad" => $value['TipoNovedad'],
+                "name"=>$value['name'],
+                "id_prestamo"=>$value['id_prestamo'],
+                "id_libro"=>$value['id_libro'],
+                
+                "created_at"=>$value['created_at'],
+                "updated_at"=>$value['updated_at'],
+                "id"=>$value['id'],
+                "lasname"=>$value['lastname'],
+
+                
+            );
+
+    
+
+            $this->op= $datos['id_elemento'];
+            $this->datos[] = $datos;
+        }
+    
+        
+    
+
+
+ 
+        
+
+
+       
+       
+    
+    
+    
+    
+    
+    
+}
 
     public function cambiarEstadoPrestamo()
     {
@@ -255,74 +295,69 @@ class Prestamos extends Component
 
 
 
-    public function cargarDatosDevolucionPrestamo($id )
+    public function cargarDatosDevolucionPrestamo($key )
     {
 
-        $consultaGeneral = Prestamo::select('prestamos.*', 'elementos.*','libros.*','libros.id', 'libros.Nombre', 'elementos.id', 'users.id', 'users.name', 'elementos.nombre', 'prestamos.id')
-        ->leftJoin('libros', 'libros.id', '=', 'prestamos.libros_id')
-        ->leftJoin('elementos', 'elementos.id', '=', 'prestamos.elementos_id')
-        ->leftJoin('users', 'users.id', '=', 'prestamos.usuario_id')
-        ->orderBy('prestamos.id', 'desc')
-        ->where('Estado_Prestamo', "=", 'Activo')
-    ->find($id);
-
-
-
-
-
-
-
-if ($consultaGeneral->Tipo_Elemento == 'Libro') {
-            $this->libros_id = $consultaGeneral->libros_id;
-            $this->elementos_id = null;
-
-            $prestador = Auth::user()->name;
-            $this->bibliotecario = $prestador;
-            $this->prestador_id = Auth::user()->id;
-            $this->usuarioDeudorD= $consultaGeneral->name;
-            $this->articuloDevolver= $consultaGeneral->Nombre;
-            $this->CantidadPrestadaDevolver= $consultaGeneral->CantidadPrestada;
-            $this->prestamos_id = $consultaGeneral->id;
-        $this->libros_id = $consultaGeneral->libros_id;
-        $this->usuario_id=$consultaGeneral->usuario_id;
-        $this->selected_id=$consultaGeneral->id;
-
-        }elseif ($consultaGeneral->Tipo_Elemento == 'Elemento') {
-            $this->elementos_id = $consultaGeneral->elementos_id;
-            $this->libros_id = null;
-            $prestador = Auth::user()->name;
-            $this->bibliotecario = $prestador;
-            $this->prestador_id = Auth::user()->id;
-            $this->usuarioDeudorD= $consultaGeneral->name;
-            $this->articuloDevolver= $consultaGeneral->nombre;
-            $this->CantidadPrestadaDevolver= $consultaGeneral->CantidadPrestada;
-            $this->prestamos_id = $consultaGeneral->id;
-        $this->elementos_id = $consultaGeneral->elementos_id;
-        $this->usuario_id=$consultaGeneral->usuario_id;
-        $this->selected_id = $consultaGeneral->id;
-
-        }
-
-
-
-
-
-
-
-
-
-
-
-
-
-/*
-$elemento = Elemento::findOrFail($cargarDatosDevolucion->elementos_id);
-        $usuario = User::findOrFail($cargarDatosDevolucion->usuario_id);
         $prestador = Auth::user()->name;
         $this->bibliotecario = $prestador;
         $this->prestador_id = Auth::user()->id;
-*/
-    }
+
+
+        $this->datosDevolucion = $this->datos[$key];
+
+
+
+
+if($this->datos[$key]['id_elemento']==null){
+
+    $this->elementos_id = null;
+    $this->usuarioDeudorD=$this->datos[$key]['name'];
+    $this->articuloDevolver=$this->datos[$key]['Nombre'];
+    $this->CantidadPrestadaDevolver=$this->datos[$key]['CantidadPrestada'];
+   
+   
+
+   }else{
+    $this->elementos_id = $this->datos[$key]['id_elemento'];
+    $this->usuarioDeudorD=$this->datos[$key]['name'];
+    $this->articuloDevolver=$this->datos[$key]['nombre'];
+   $this->CantidadPrestadaDevolver=$this->datos[$key]['CantidaPrestadaU'];
+
+
+ }
+
+
+
+
+
+
+
+
+
+
+
+
+       
+        
+
+    
+       
+         
+
+
+
+      }
+
+
+
+
+
+
+
+
+
+
+    
     //Finalizar Prestamo
 
     public function finalizarPrestamoEstado($id)
@@ -394,18 +429,7 @@ $elemento = Elemento::findOrFail($cargarDatosDevolucion->elementos_id);
     public function actualizarCantidadDevolucionLibros()
     {
 
-        $prestamo = Prestamo::select('prestamos.*', 'elementos.*','libros.*','libros.id', 'libros.Nombre', 'elementos.id', 'users.id', 'users.name', 'elementos.nombre', 'prestamos.id')
-        ->leftJoin('libros', 'libros.id', '=', 'prestamos.libros_id')
-        ->leftJoin('elementos', 'elementos.id', '=', 'prestamos.elementos_id')
-        ->leftJoin('users', 'users.id', '=', 'prestamos.usuario_id')
-        ->orderBy('prestamos.id', 'desc')
-        ->where('Estado_Prestamo', "=", 'Activo')
-
-
-            ->where('prestamos.id', '=', $this->selected_id)
-            ->first()
-            ->findOrFail($this->selected_id);
-
+       
 
 
 
@@ -455,17 +479,7 @@ $elemento = Elemento::findOrFail($cargarDatosDevolucion->elementos_id);
     public function actualizarCantidadDevolucion()
     {
 
-        $prestamo = Prestamo::select('prestamos.*', 'elementos.*','libros.*','libros.id', 'libros.Nombre', 'elementos.id', 'users.id', 'users.name', 'elementos.nombre', 'prestamos.id')
-        ->leftJoin('libros', 'libros.id', '=', 'prestamos.libros_id')
-        ->leftJoin('elementos', 'elementos.id', '=', 'prestamos.elementos_id')
-        ->leftJoin('users', 'users.id', '=', 'prestamos.usuario_id')
-        ->orderBy('prestamos.id', 'desc')
-        ->where('Estado_Prestamo', "=", 'Activo')
-
-
-            ->where('prestamos.id', '=', $this->selected_id)
-            ->first()
-            ->findOrFail($this->selected_id);
+      
 
 
 
@@ -737,13 +751,6 @@ else{
     {
 
 
-        $consulta = Prestamo::select('prestamos.*', 'libros.*', 'elementos.*', 'users.*', 'libros.Nombre', 'elementos.id', 'users.id', 'users.name', 'elementos.nombre', 'prestamos.id')
-            ->leftJoin('libros', 'libros.id', '=', 'prestamos.libros_id')
-            ->leftJoin('elementos', 'elementos.id', '=', 'prestamos.elementos_id')
-            ->leftJoin('users', 'users.id', '=', 'prestamos.usuario_id')
-            ->orderBy('prestamos.id', 'desc')
-            ->where('prestamos.id', '=', $id)
-            ->first();
 
 
         if ($consulta->libros_id != null) {

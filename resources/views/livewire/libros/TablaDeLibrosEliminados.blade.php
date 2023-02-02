@@ -75,7 +75,7 @@
 
                                 <a data-bs-toggle="modal" title="Eliminar"
                                     class=" bi bi-trash3-fill  text-white  m-1  btn btn-danger "
-                                    wire:click="eliminarLibroTotalMente({{ $row->id }})">
+                                    wire:click="llamarModalEliminarLibro({{ $row->id }})">
                                 </a>
 
                             </td>

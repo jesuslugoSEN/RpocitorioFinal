@@ -1,12 +1,9 @@
-
-
-
 <div>
 
 
     <div class="container-fluid">
 
-        <div class="justify-content-center">
+        <div class="justify-content-center h-100" >
 
 
 
@@ -97,8 +94,4 @@
         </div>
     </div>
 </div>
-
-
-
-
 

@@ -1,11 +1,5 @@
 <div class="card p-1">
-    @if (session()->has('AlertaPrestamoLibro'))
-        <div class="alert alert-info" role="alert" wire:poll.5s>
-            <strong>
-                {{ session('AlertaPrestamoLibro') }}
-            </strong>
-        </div>
-    @endif
+   @include('Alertas.Alertas')
     <div class="card-header m-2 bg-info text-center text-white">
         Formulario Libros
     </div>
@@ -31,7 +25,7 @@
                     <option> Elige un Usuario
                     </option>
                     @foreach ($consultaUsuariosLibros as $usuario)
-                        <option selected value="{{ $usuario->id }}"> {{ $usuario->name }}
+                        <option selected value="{{ $usuario->id }}"> {{ $usuario->name }} {{ $usuario->lastname }}
                         </option>
                     @endforeach
 
@@ -58,6 +52,13 @@
                 <strong>{{ $message }}</strong>
             </span>
         @enderror
+
+        <div>
+            <label for="exampleFormControlTextarea1" class="form-label">Novedades</label>
+            <textarea class="form-control @error('Novedades') is-invalid @enderror" id="exampleFormControlTextarea1"
+                wire:model.defer="NovedadesF" cols="1" rows="3" disabled></textarea>
+        </div>
+       
         <div class="col-md-12  d-flex justify-content-around ">
             <div class="col-md-5">
                 <label for="cantidadDisponible" class="form-label">Cantidad Disponible</label>
@@ -108,8 +109,8 @@
                 <tbody>
                 <tr class="text-center " wir:key=" {{ $key }} ">
                     <td scope="row" wire:key=" {{ $key + 1 }} "></td>
-
-
+                    <td>{{ $loop->iteration }}</td>
+                    <td> {{ $libro['NombreLibro'] }} </td>
                     <td> {{ $libro['CantidadPrestada'] }} </td>
                     <td> <button wire:click.prevent="quitarLibroPrestamo(  {{ $key }} )"  class="btn btn-danger  text-white bi bi-dash-circle"></button>  </td>
                 </tr>

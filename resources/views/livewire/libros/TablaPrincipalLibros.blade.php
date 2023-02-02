@@ -8,8 +8,8 @@
     <div class="d-flex  justify-content-between">
 
         <div class="col-6">
-            <input wire:model='buscarLibro' type="text" class="form-control  m-3" name="search"
-                id="search" placeholder="Buscar Libros">
+            <input wire:model="libros" type="text" class="form-control  m-3" 
+              placeholder="Buscar Libros">
         </div>
 
 
@@ -38,7 +38,7 @@
                     @forelse($libros as $row)
                         <tr>
                             <td>{{ $loop->iteration }}</td>
-                            <td>{{ $row->Nombre }}</td>
+                            <td>{{ $row->Nombre }}  {{ $row->NombreTomo }}  </td>
                             <td>{{ $row->Autor }}</td>
                             <td>{{ $row->Editorial }}</td>
                             <td>{{ $row->Edicion }}</td>
@@ -52,6 +52,14 @@
 
                                 </td>
 
+                                @elseif($row->Estado == 'NoDisponible')
+
+
+
+                                <td class=" text-white">
+                                    <button title="No Disponible" class="btn btn-primary text-white bi bi-bookmark-x-fill">
+
+                                    </button>
                             @else
                                 <td class=" text-white">
                                     <button title="Disponible" class="btn btn-warning text-white bi bi-bookmark-check-fill">
@@ -74,7 +82,7 @@
                                     wire:click="edit({{ $row->id }})"></a>
                                 <a  title="Inactivar"  class="btn btn-danger bi bi-trash3-fill  text-white m-1 "
 
-                                    wire:click="destroy({{ $row->id }})"></a>
+                                    wire:click="eliminar({{ $row->id }})"></a>
                                 <a  title="Ver" data-bs-toggle="modal" data-bs-target="#verlibro"
                                     class=" bi bi bi-eye-fill text-white btn btn-warning m-1 "
                                     wire:click="VerdetalleCategoria({{ $row->id }})"> </a>

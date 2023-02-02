@@ -30,9 +30,9 @@
 
 
 
-    
-           
-        
+
+
+
 
 
 
@@ -81,25 +81,127 @@
     });
 </script>
 
+@push('js')
+    <script>
+        livewire.on('destroy', id => {
+
+
+
+
+
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "You won't be able to revert this!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, delete it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire(
+                        'Deleted!',
+                        'Your file has been deleted.',
+                        'success'
+                    )
+                }
+            })
+
+
+        });
+    </script>
+@endpush
+
 <script>
     window.addEventListener('swal', function(e) {
         Swal.fire({
             title: e.detail.title,
             icon: e.detail.icon,
             iconColor: e.detail.iconColor,
-            timer: 4000,
+            timer: 6000,
             toast: true,
             position: 'top-right',
             toast: true,
             showConfirmButton: false,
-            
+
         });
 
-       
+
+    });
+</script>
+
+<script>
+    window.addEventListener('crear', function(e) {
+        Swal.fire({
+            title: e.detail.title,
+            icon: e.detail.icon,
+            iconColor: e.detail.iconColor,
+            timer: 4000,
+            text: e.detail.text,
+
+        });
+
+
     });
 </script>
 
 
+<script>
+    window.addEventListener('eliminar', event => {
+        Swal.fire({
+            title: 'Desea Inactivar Esta Categoria?',
+          
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Si, Inactivar!',
+            cancelButtonText: 'No, Cancelar!',
+        }).then((result) => {
+            if (result.isConfirmed) {
+
+                window.livewire.emit('destroy', event.detail.id);
+                Swal.fire(
+                    'Inactivada!',
+                    'Categoria Inactivada Con Exito.',
+                    'success'
+                )
+            }
+        })
+
+
+    });
+</script>
+
+
+
+
+<script>
+    window.addEventListener('eliminarT', event => {
+        Swal.fire({
+            title: 'Desea Eliminar Esta Categoria?',
+          
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Si, Eliminar!',
+            cancelButtonText: 'No, Cancelar!',
+        }).then((result) => {
+            if (result.isConfirmed) {
+
+                window.livewire.emit('inactivarCategoria', event.detail.id);
+                Swal.fire(
+                    'Eliminada!',
+                    'Categoria Eliminada Con Exito Del Sistema.',
+                    'success'
+                )
+            }
+        })
+
+
+    });
+</script>
 
 
 

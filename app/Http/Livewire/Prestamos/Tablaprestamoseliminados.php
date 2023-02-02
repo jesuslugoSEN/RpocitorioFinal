@@ -18,15 +18,7 @@ public $buscadorPrestamos;
     {
 
         $buscadorPrestamos = '%'.$this->buscadorPrestamos .'%';
-        $prestamosEliminados= Prestamo::onlyTrashed()->select('prestamos.*','libros.id','libros.Nombre','elementos.id','users.id','users.name','elementos.nombre','prestamos.id')
-        ->leftJoin('libros','libros.id','=','prestamos.libros_id')
-        ->leftJoin('elementos','elementos.id','=','prestamos.elementos_id')
-        ->leftJoin('users','users.id','=','prestamos.usuario_id')
-        ->orderBy('prestamos.id','desc')
-        ->where('Estado_Prestamo','Inactivo')
-       
-        ->paginate(10)
-        ;
+        $prestamosEliminados= Prestamo::onlyTrashed()->get();
 
         
         return view('livewire.prestamos.tablaprestamoseliminados',compact('prestamosEliminados'));

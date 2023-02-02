@@ -15,7 +15,7 @@ class Libro extends Model
 
     protected $table = 'libros';
 
-    protected $fillable = ['Nombre','Autor','Editorial','Edicion','Descripcion','Estado','categoria_id','CantidadLibros'];
+    protected $fillable = ['Nombre','Autor','Editorial','Edicion','Descripcion','Estado','categoria_id','CantidadLibros','NombreTomo'];
 
     /**
      * @return \Illuminate\Database\Eloquent\Relations\HasOne
@@ -41,6 +41,10 @@ class Libro extends Model
         return $this->hasMany('App\Models\Prestamo', 'libros_id', 'id');
     }
 
+    public function detalle_prestamo()
+    {
+        return $this->hasOne(Prestamos\DetallePrestamo::class,'id_libro','id');
+    }
 
     public function librosNovedades()
     {

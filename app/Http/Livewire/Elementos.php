@@ -9,6 +9,7 @@ use App\Models\Prestamo;
 use App\Models\Categoria;
 use Livewire\WithPagination;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Prestamos\DetallePrestamo;
 
 
 class Elementos extends Component
@@ -16,11 +17,11 @@ class Elementos extends Component
     use WithPagination;
 
 
-    public $nombreElemento, $cantidadElemento;
+    public $nombreElemento, $cantidadElemento,$NovedadesElemento,$TipoNovedad;
     public $totalCantidad;
 
     protected $paginationTheme = 'bootstrap';
-    public $selected_id, $keyWord, $nombre, $cantidad, $descripcion, $Estado, $categoria_id, $name, $Fecha_Prestamo, $usuario_id, $CantidadPrestar, $prestador_id;
+    public $selected_id, $keyWord, $nombre,$idarray, $cantidad, $descripcion, $Estado, $categoria_id, $name, $Fecha_Prestamo, $usuario_id, $CantidadPrestar, $prestador_id;
     public $arrayElementos = [];
     public function render()
     {
@@ -61,8 +62,10 @@ class Elementos extends Component
         'nombre' => 'required',
         'cantidad' => 'required|min:1|numeric',
         'descripcion' => 'required',
-        'Estado' => 'required',
+        
         'categoria_id' => 'required',
+        'NovedadesElemento'=>'required',
+        'TipoNovedad'=>'required'
 
 
 
@@ -81,6 +84,8 @@ class Elementos extends Component
         $this->descripcion = null;
         $this->Estado = null;
         $this->categoria_id = null;
+        $this->NovedadesElemento = null;
+        $this->TipoNovedad = null;
     }
 
     public function crearElemento()
@@ -88,29 +93,58 @@ class Elementos extends Component
 
         $validateData = $this->validate();
 
-        Elemento::create([
-            'nombre' => $this->nombre,
-            'cantidad' => $this->cantidad,
-            'descripcion' => $this->descripcion,
-            'Estado' => $this->Estado,
-            'categoria_id' => $this->categoria_id
-        ]);
 
-        $this->cancelar();
-        $this->dispatchBrowserEvent('cerrar');
-        session()->flash('message', 'Elemento creado Con exito.');
+        $crearElemento = new Elemento();
+
+           $crearElemento->nombre = $this->nombre;
+              $crearElemento->cantidad = $this->cantidad;
+                    $crearElemento->descripcion = $this->descripcion;
+                        $crearElemento->Estado = 'Disponible';
+                        $crearElemento->categoria_id = $this->categoria_id;
+                        $crearElemento->NovedadesElemento = $this->NovedadesElemento;
+                        $crearElemento->TipoNovedad = $this->TipoNovedad;
+                            $crearElemento->save();
+    
+
+                            $this->selected_id=$crearElemento->id;
+                            $this->actualizarEstadoNovedad();
+
+                         
+                            $this->resetErrorBag();
+                                $this->cancelar();
+                                $this->dispatchBrowserEvent('cerrar');
+                                $this->dispatchBrowserEvent('crear', [
+                                    'type' => 'success',
+                                    'title' => 'Elemento Agregado Con Exito...',
+                                    'icon'=>'success',
+                                    
+                                ]);
+
+
+
+       
 
     }
 
     public function editarElemento($id)
     {
         $record = Elemento::findOrFail($id);
+
+        if($record->Estado=='Agotado'){
+
+            $this->dispatchBrowserEvent('cerrar');
+            session()->flash('info', 'No se puede editar un elemento Agotado tiene prestamos realizados');
+            return;
+
+        }
         $this->selected_id = $id;
         $this->nombre = $record->nombre;
         $this->cantidad = $record->cantidad;
         $this->descripcion = $record->descripcion;
         $this->Estado = $record->Estado;
         $this->categoria_id = $record->categoria_id;
+        $this->NovedadesElemento=$record->NovedadesElemento;
+        $this->TipoNovedad = $record->TipoNovedad;
     }
 
     public function actualizarElemento()
@@ -121,6 +155,8 @@ class Elementos extends Component
             'descripcion' => 'required',
             'Estado' => 'required',
             'categoria_id' => 'required',
+            'NovedadesElemento'=>'required',
+            'TipoNovedad'=>'required'
         ]);
 
         if ($this->selected_id) {
@@ -130,15 +166,51 @@ class Elementos extends Component
                 'cantidad' => $this->cantidad,
                 'descripcion' => $this->descripcion,
                 'Estado' => $this->Estado,
-                'categoria_id' => $this->categoria_id
-            ]);
+                'categoria_id' => $this->categoria_id,
+                'NovedadesElemento' => $this->NovedadesElemento,
+                'TipoNovedad' => $this->TipoNovedad,
 
+            ]);
+$this->actualizarEstadoNovedad();
             $this->cancelar();
             $this->dispatchBrowserEvent('cerrar');
-            session()->flash('message', 'Elemento Actualizado Con Exito.');
+           
             $this->resetErrorBag();
+            $this->dispatchBrowserEvent('crear', [
+                'type' => 'success',
+                'title' => 'Elemento Actualizado Con Exito...',
+                'icon'=>'success',
+                
+            ]);
         }
     }
+
+
+
+
+
+public function actualizarEstadoNovedad(){
+
+    $elementoN = Elemento::find($this->selected_id);
+
+        
+      if($elementoN->TipoNovedad =='Alta'){
+
+        $elementoN->Estado='NoDisponible';
+        $elementoN->update();
+      }elseif($elementoN->TipoNovedad =='Ninguna'){
+        $elementoN->Estado='Disponible';
+        $elementoN->update();
+        }elseif($elementoN->TipoNovedad =='Media'){
+            $elementoN->Estado='Disponible';
+            $elementoN->update();
+             }elseif($elementoN->Estado=='Agotado'){
+
+            session()->flash('info', 'El Elemento no puede ser actualizado porque esta agotado.');
+             }
+}
+
+
 
     //Inactivar Elemento
     public function inactivarElemento($id)
@@ -146,6 +218,7 @@ class Elementos extends Component
 
 
         $elemento = Elemento::find($id);
+
         if ($elemento->Estado == 'Disponible') {
             $elemento->Estado = 'Inactivo';
             $elemento->save();
@@ -157,6 +230,7 @@ class Elementos extends Component
             session()->flash('message', 'Libro No Puede Ser Inactivado Porque actualmente esta prestado.');
         }
     }
+
 
 
 
@@ -192,12 +266,36 @@ class Elementos extends Component
 
 
         $prestamoC = Elemento::findOrFail($id);
+       
+
+    
 
 
-        if($prestamoC->cantidad==0){
-            session()->flash('alertaprestamow', 'No se puede prestar este elemento porque no hay unidades disponibles');
+
+
+
+        if($prestamoC->cantidad==0 and $prestamoC->TipoNovedad=='Alta'){
+            session()->flash('info', 'No se puede prestar este elemento porque no hay unidades disponibles');
             return;
-        }else{
+
+        }
+        elseif($prestamoC->TipoNovedad=='Alta')
+        {
+            session()->flash('error', 'No se puede prestar este elemento porque actualmente tiene una novedad');
+            return;
+        }elseif($prestamoC->Estado=='Agotado')
+        {
+            session()->flash('info', 'No se puede prestar este elemento porque actualemte no hay unidades disponibles');
+            return;
+        }elseif($prestamoC->Estado=='Inactivo')
+        {
+            session()->flash('error', 'No se puede prestar este elemento porque esta inactivo');
+            return;
+        }
+        elseif($prestamoC->TipoNovedad =='Media'){
+
+            session()->flash('info', 'Este elemento tiene una novedad media, se debe revisar antes de ser prestado');
+            
             $prestador = Auth::user()->name;
         $this->name = $prestador;
         $this->prestador_id = Auth::user()->id;
@@ -205,10 +303,27 @@ class Elementos extends Component
 
         $this->nombreElemento = $prestamoC->nombre;
         $this->cantidadElemento = $prestamoC->cantidad;
-        $this->descripcion = $prestamoC->descripcion;
+        $this->NovedadesElemento = $prestamoC->NovedadesElemento;
+        $this->Estado = $prestamoC->Estado;
+        }elseif($prestamoC->cantidad==0 ){
+            session()->flash('info', 'No se puede prestar este elemento porque no hay unidades disponibles y tiene una novedad');
+            return;
+          }
+
+        else{
+
+
+            $prestador = Auth::user()->name;
+        $this->name = $prestador;
+        $this->prestador_id = Auth::user()->id;
+        $this->selected_id = $id;
+
+        $this->nombreElemento = $prestamoC->nombre;
+        $this->cantidadElemento = $prestamoC->cantidad;
+        $this->NovedadesElemento = $prestamoC->NovedadesElemento;
         $this->Estado = $prestamoC->Estado;
 
-        session()->flash('alertaprestamow', 'Datos cargados con exito');
+        session()->flash('exito', 'Datos cargados con exito');
         }
 
 
@@ -217,6 +332,8 @@ class Elementos extends Component
 
 
     }
+
+  
 
 
     //Funcion Actualizar Cantidad
@@ -246,7 +363,20 @@ class Elementos extends Component
             $elemento->Estado='Agotado';
 
         $elemento->update(); }
-    }
+        elseif($elemento->TipoNovedad=='Alta'){
+            $elemento->Estado='Fueradeservicio';
+              }elseif($elemento->Estado=='Agotado'){
+            $elemento->Estado='Disponible';
+
+        $elemento->update(); }
+        elseif($elemento->Estado=='Fueradeservicio'){
+            $elemento->Estado='Disponible';
+            $elemento->update();
+              }
+        else{
+            $elemento->Estado='Disponible';
+       
+    }  }
 
 
 
@@ -261,13 +391,18 @@ class Elementos extends Component
         $CantidadPrestar = $this->CantidadPrestar;
         $cantidadElemento = $this->cantidadElemento;
 
+$this->validate([
+            'usuario_id' => 'required',
+            
+        ]);
+
         if ($CantidadPrestar > $cantidadElemento) {
 
-            session()->flash('alertaprestamow', 'La cantidad a prestar no puede ser mayor a la cantidad del elemento');
+            session()->flash('info', 'La cantidad a prestar no puede ser mayor a la cantidad del elemento');
 
 
         } elseif ($CantidadPrestar <= 0) {
-            session()->flash('alertaprestamow', 'La cantidad a prestar no puede ser menor a 0');
+            session()->flash('info', 'La cantidad a prestar no puede ser menor a 0');
 
         } else {
 
@@ -284,63 +419,69 @@ class Elementos extends Component
 
                 $tipoel = 'Elemento';
 
-                $arrayElementos = array(
+                $idrr = rand(1, 99999999);
+                $this->idarray = $idrr;
 
+                $arrayElementos = array(
+'id_array'=>$this->idarray,
                     'NombreElemento'=>$this->nombreElemento,
                     'id'=>   $this->selected_id,
                     'usuario_id'=>$this->usuario_id,
-                    'Tipo_Elemento'=>$tipoel,
-                    'NombreBibliotecario'=>$this->name,
+
+                    
                     // $this->nombreLibro = $prestamoLibrof -> Nombre,
                     'CantidadPrestada'=>             $this->CantidadPrestar,
 
-
+                   'NovedadesPrestamoU'=>$this->NovedadesElemento,
 
 
                 );
+                
 
 
                 $this->arrayElementos[] = $arrayElementos;
 
+               
 
-                $this->actualizarCantidad();
+                
+        
+               
+        
+               
 
-                $this->actualizarEstado();
+                        $this->actualizarCantidad();
 
+                        $this->actualizarEstado();
+        
+    
+        
+        
+                        session()->flash('info', 'Datos Cargados Con Exito.');
+                        $this->resetErrorBag();
+                       
+                        
+                        
+                        
+                   
 
+                
 
-
-                session()->flash('alertaprestamow', 'Datos Cargados Con Exito.');
-                $this->resetErrorBag();
+                
+              
 
             }
         }
+
+
+        
+
     }
 
 
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    
 
 
 
@@ -382,23 +523,47 @@ class Elementos extends Component
     public function añadirPrestamoModeloPrestamoElemento(){
 
 
+
+
+
+        $prestamos = new Prestamo();
+
+        $prestamos->usuario_id = $this->usuario_id;
+        $prestamos->Tipo_Elemento = 'Elemento';
+        $prestamos->NombreBibliotecario  = Auth::user()->name;
+
+        $prestamos->created_at = now();
+        $prestamos->updated_at = now();
+
+        $prestamos->save();
+
+        
+
+
         foreach($this->arrayElementos as $key =>$elemento){
 
             $datos = array(
 
-                "elementos_id" => $elemento['id'],
-                "usuario_id" => $elemento['usuario_id'],
-                "CantidadPrestada" => $elemento['CantidadPrestada'],
-                "Tipo_Elemento" => $elemento['Tipo_Elemento'],
-                "NombreBibliotecario" => $elemento['NombreBibliotecario'],
+                "id_prestamo"=> $prestamos->id,
+                "id_elemento" => $elemento['id'],
+                "CantidaPrestadaU" => $elemento['CantidadPrestada'],
+                "NovedadesPrestamoU" => $elemento['NovedadesPrestamoU'],
+
                 "created_at"=>now(),
                 "updated_at"=>now(),
             );
-            Prestamo::insert($datos);
+            DetallePrestamo::insert($datos);
             unset($this->arrayElementos[$key]);
             session()->flash('alertaprestamow', 'Prestamo Realizado  Con Exito.');
             $this->limpiarCampos();
         }
+
+        $this->dispatchBrowserEvent('crear', [
+            'type' => 'success',
+            'title' => 'Prestamo Realizado Con Exito...',
+            'icon'=>'success',
+            
+        ]);
     }
 
 

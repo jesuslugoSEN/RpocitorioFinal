@@ -48,4 +48,19 @@
 
 </body>
 
+<script>
+
+
+    let c = document.getElementById('c');
+
+    c.addEventListerner('change',(event)=>{
+        let checkend=event.target.checked;
+        if(checkend
+        )
+    })
+</script>
+
+
+
+
 </html>

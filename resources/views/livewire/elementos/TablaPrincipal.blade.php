@@ -50,15 +50,21 @@
 
                             </td>
 
-                        @else
+                        @elseif($row->Estado == 'NoDisponible')
                             <td class=" text-white">
-                                <button title="Disponible" class="btn btn-warning text-white bi bi-bookmark-check-fill">
+                                <button title="Fuera De Servicio" class="btn btn-primary text-white bi bi-bookmark-check-fill">
 
                                 </button>
 
                             </td>
 
+                        @else
+                        <td class=" text-white">
+                            <button title="Disponible" class="btn btn-warning text-white bi bi-bookmark-check-fill">
 
+                            </button>
+
+                        </td>
                         @endif
 
 

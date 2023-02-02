@@ -5,6 +5,7 @@ namespace App\Http\Livewire;
 use App\Models\Libro;
 use App\Models\Novedades;
 use App\Models\Prestamo;
+use App\Models\Prestamos\DetallePrestamo;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
@@ -16,48 +17,44 @@ use Symfony\Component\HttpKernel\HttpCache\Ssi;
 class Libros extends Component
 {
 	use WithPagination;
+    protected $listeners = ['destroy' => 'destroy' ,'eliminarsl' => 'eliminarLibroTotalMente'];
     private $prestador_id,$Tipo_Elemento;
 
 public $libro , $nombreBibliotecario,$FechaPrestamo, $nombreLibro, $nombreUsuario, $cantidadDisponible, $cantidadPrestamo ,$cantidaPrestarLibro;
 	protected $paginationTheme = 'bootstrap';
-	public $selected_id,$Cantidad, $buscarLibro, $Nombre, $Autor, $Editorial, $Edicion, $Descripcion, $Estado, $categoria_id,$CantidadLibros, $librosConsulta, $categoriaNombre, $categoriaAutor,$categoriaEditorial ,$categoriaCantidad,$categoriaEstado,$categoriaEdicion,$categoriaDescripcion;
+	public $selected_id,$Cantidad,  $Nombre, $Autor, $Editorial, $Edicion, $Descripcion, $Estado, $categoria_id,$CantidadLibros, $librosConsulta, $categoriaNombre, $categoriaAutor,$categoriaEditorial ,$categoriaCantidad,$categoriaEstado,$categoriaEdicion,$categoriaDescripcion;
     public $arrayAgregaralatabla = [];
+    public $arraycrearLibro = [],$Novedades,$TipoNovedad,$NombreTomo;
+    public $buscar,$Libro,$usuario_id,$NovedadesF;
 
 	public function render()
 	{
-        $buscarLibro = '%'.$this->buscarLibro .'%';
+        $buscar = '%'.$this->buscar .'%';
         $consultaUsuariosLibros = User::where('Estado','=','Activo')->select('id','name')->get();
 		$consulta = Libro::onlyTrashed()
 			->orWhere('Estado', "=", 'Inactivo')
 			->paginate(10);
 		$categorias = Categoria::where('Tipo', "=", 'Libros')->where('Estado', "=", 'Activa')->select('id', 'nombre')->get()
         ;
-        $libros=categoria::select('categorias.nombre','libros.id','libros.Nombre','libros.Autor','libros.Editorial','libros.CantidadLibros','libros.Estado','libros.Edicion')->join('libros','categorias.id','=','libros.categoria_id')
-
-            ->where('libros.Estado','=','Disponible')
+        $libros=Categoria::select('categorias.nombre','libros.id','libros.Nombre','libros.Autor','libros.Editorial','libros.CantidadLibros','libros.Estado','libros.Edicion','libros.NombreTomo')->join('libros','categorias.id','=','libros.categoria_id')
+        
+            ->orwhere('libros.Estado','=','Disponible')
             ->orwhere('libros.Estado','=','Agotado')
-
-
+->orwhere('libros.Estado','=','NoDisponible')
+->orWhere('libros.Nombre', 'LIKE', $buscar)
             ->orderBy('libros.id','desc')
             ->paginate(10)
         ;
-        $librosConsulta=categoria::select('categorias.nombre','libros.id','libros.Nombre','libros.Autor','libros.Editorial','libros.CantidadLibros','libros.Estado','libros.Edicion')->join('libros','categorias.id','=','libros.categoria_id')
+
+        $pruba = Libro::select('Nombre')->orWhere('Nombre', 'LIKE', $buscar);
+
+        $librosConsulta=Libro::select('Nombre')
 
 
-            ->orWhere('libros.Nombre', 'LIKE', $buscarLibro)
-            ->orWhere('categorias.nombre', 'LIKE', $buscarLibro)
-            ->orWhere('libros.Autor', 'LIKE', $buscarLibro)
-            ->orWhere('libros.Editorial', 'LIKE', $buscarLibro)
-            ->orWhere('libros.CantidadLibros', 'LIKE', $buscarLibro)
-            ->orWhere('libros.Estado', 'LIKE', $buscarLibro)
-            ->orWhere('libros.Edicion', 'LIKE', $buscarLibro)
-
-            ->where('categorias.Tipo','=','Libros')
-            ->orwhere('libros.Estado','=','Disponible')
-
-
-        ->orderBy('libros.id','desc')
-        ->paginate(10)
+            
+            
+        
+        ->get()
         ;
 
 
@@ -93,7 +90,7 @@ protected $rules = [
     'Autor' => 'string|required|min:3|max:70',
     'Editorial' => 'string|required|min:3|max:70',
     'Edicion' => 'string|required|min:3|max:70',
-    'Estado' => 'string|required|min:3|max:70',
+   
     'categoria_id' => 'required',
     'Cantidad' => 'numeric|required|min:1',
     'Descripcion' => 'required|max:200|min:3',
@@ -133,6 +130,7 @@ public function updated($validacionLibros)
 
 
         $prestamoDevolver->CantidadLibros = $totaldevLi;
+        $prestamoDevolver->Estado = 'Disponible';
 
         $prestamoDevolver->update();
 
@@ -140,31 +138,57 @@ public function updated($validacionLibros)
         unset($this->arrayAgregaralatabla[$key]);
         session()->flash('exito','Prestamo Cancelado');
 
-
     }
 
 
 
     public function añadirPrestamoModeloPrestamo(){
 
+        $codigo_Prestamo ='LAINB'. rand(1, 99999999);
+        
+        $this->$codigo_Prestamo = $codigo_Prestamo;
 
+        
+        $prestamos = new Prestamo();
+        $prestamos->Codigo_Prestamo = $codigo_Prestamo;
+
+        $prestamos->usuario_id =$this->nombreUsuario;
+        $prestamos->Tipo_Elemento = 'Libro';
+        $prestamos->NombreBibliotecario  = Auth::user()->name;
+
+        $prestamos->created_at = now();
+        $prestamos->updated_at = now();
+
+       
+$prestamos->save();
 
         foreach($this->arrayAgregaralatabla as $key =>$libro){
 
+           
             $datos = array(
 
-                "libros_id" => $libro['id'],
-                "usuario_id" => $libro['usuario_id'],
-                "CantidadPrestada" => $libro['CantidadPrestada'],
-                "Tipo_Elemento" => $libro['Tipo_Elemento'],
-                "NombreBibliotecario" => $libro['NombreBibliotecario'],
+                "id_libro" => $libro['id'],
+                "id_prestamo"=> $prestamos->id,
+               
+                "CantidaPrestadaU" => $libro['CantidadPrestada'],
+                "NovedadesPrestamoU" => $libro['NovedadesPrestamoU'],
+
                 "created_at"=>now(),
                 "updated_at"=>now(),
             );
-            Prestamo::insert($datos);
-            unset($this->arrayAgregaralatabla[$key]);
-            session()->flash('AlertaPrestamoLibro', 'Prestamo Realizado  Con Exito.');
+
+        
+           DetallePrestamo::insert($datos);
+           unset($this->arrayAgregaralatabla[$key]);
         }
+
+        
+            $this->dispatchBrowserEvent('crear', [
+                'type' => 'success',
+                'title' => 'Prestamo Realizado Con Exito...',
+                'icon'=>'success',
+                
+            ]);
 
     }
 
@@ -184,26 +208,147 @@ public function updated($validacionLibros)
         $this->Cantidad= null;
 	}
 
-	public function store()
-	{
-		$validarDatos = $this->validate();
 
-		Libro::create([
-			'Nombre' => $this->Nombre,
+public function anadirTomo(){
+
+
+
+
+
+
+        $dr = 'Disponible';
+        $du='NoDisponible';
+        $arraycrearLibro = array(
+           
+
+            'Nombre' => $this->Nombre,
 			'Autor' => $this->Autor,
 			'Editorial' => $this->Editorial,
 			'Edicion' => $this->Edicion,
 			'Descripcion' => $this->Descripcion,
-			'Estado' => $this->Estado,
+			'Estado' => $this->Estado=$dr,
 			'categoria_id' => $this->categoria_id,
             'CantidadLibros' => $this->Cantidad,
+           'Novedades'=>$this->Novedades,
+           'TipoNovedad'=>$this->TipoNovedad,
+           'NombreTomo'=>$this->NombreTomo,
+           
+
+            "created_at"=>now(),
+            "updated_at"=>now(),
+
+           
+        );
+
+       $arraycrearLibro= $this->TipoNovedad;
+
+        if($this->TipoNovedad == 'Alta'){
+
+            $arraycrearLibro = array(
+               
+
+                'Nombre' => $this->Nombre,
+                'Autor' => $this->Autor,
+                'Editorial' => $this->Editorial,
+                'Edicion' => $this->Edicion,
+                'Descripcion' => $this->Descripcion,
+                'Estado' => $this->Estado=$du,
+                'categoria_id' => $this->categoria_id,
+                'CantidadLibros' => $this->Cantidad,
+               'Novedades'=>$this->Novedades,
+               'TipoNovedad'=>$this->TipoNovedad,
+               'NombreTomo'=>$this->NombreTomo,
+               
+    
+                "created_at"=>now(),
+                "updated_at"=>now(),
+    
+               
+            );
+        }elseif($this->TipoNovedad == 'Ninguna' || $this->TipoNovedad == 'Media'){
+            $arraycrearLibro = array(
+               
+
+                'Nombre' => $this->Nombre,
+                'Autor' => $this->Autor,
+                'Editorial' => $this->Editorial,
+                'Edicion' => $this->Edicion,
+                'Descripcion' => $this->Descripcion,
+                'Estado' => $this->Estado=$dr,
+                'categoria_id' => $this->categoria_id,
+                'CantidadLibros' => $this->Cantidad,
+               'Novedades'=>$this->Novedades,
+               'TipoNovedad'=>$this->TipoNovedad,
+               'NombreTomo'=>$this->NombreTomo,
+               
+    
+                "created_at"=>now(),
+                "updated_at"=>now(),
+    
+               
+            );
+   }
+        
+        $this->arraycrearLibro[] =  $arraycrearLibro;
+       
+
+    }
+
+    public function eliminarTomo($key){
+        unset($this->arraycrearLibro[$key]);
+}
 
 
-		]);
+	public function store()
+	{
+		$validarDatos = $this->validate();
 
-		$this->resetInput();
+
+
+
+
+        foreach($this->arraycrearLibro as $key =>$libro){
+
+            $datos = array(
+
+                "Nombre" => $libro['Nombre'],
+                "Autor" => $libro['Autor'],
+                "Editorial" => $libro['Editorial'],
+                "Edicion" => $libro['Edicion'],
+                "Descripcion" => $libro['Descripcion'],
+                "Estado" => $libro['Estado'],
+                "categoria_id" => $libro['categoria_id'],
+                "CantidadLibros" => $libro['CantidadLibros'],
+                "Novedades" => $libro['Novedades'],
+                "TipoNovedad" => $libro['TipoNovedad'],
+                "NombreTomo" => $libro['NombreTomo'],
+                "created_at"=>now(),
+                "updated_at"=>now(),
+            );
+            Libro::insert($datos);
+
+    
+       unset($this->arraycrearLibro[$key]);
+         }
+       
+   
+
+           
+            $this->resetInput();
+        
+
+
+
+        
+
+		
 		$this->dispatchBrowserEvent('cerrar');
-		session()->flash('message', 'Libro Creado Con Exito.');
+        $this->dispatchBrowserEvent('crear', [
+            'type' => 'success',
+            'title' => 'Libro  Añadido Con  Exito...',
+            'icon'=>'success',
+            
+        ]);
 	}
 
 
@@ -225,7 +370,10 @@ public function updated($validacionLibros)
 		$this->Estado = $record->Estado;
 		$this->categoria_id = $record->categoria_id;
         $this->CantidadLibros= $record->CantidadLibros;
-        $this->Categoria = $record->Categoria;
+        $this->Novedades= $record->Novedades;
+        $this->TipoNovedad= $record->TipoNovedad;
+        $this->NombreTomo=$record->NombreTomo;
+        
 
 	}
 
@@ -259,6 +407,7 @@ public function updated($validacionLibros)
             'Estado' => 'required|min:3|max:70',
             'categoria_id' => 'required',
             'CantidadLibros' => 'required|numeric|min:1',
+            
         ]);
 
 
@@ -273,14 +422,50 @@ public function updated($validacionLibros)
             $record->Estado = $this->Estado;
             $record->categoria_id = $this->categoria_id;
             $record->CantidadLibros = $this->CantidadLibros;
+            $record->TipoNovedad = $this->TipoNovedad;
+            $record->Novedades = $this->Novedades;
+            $record->NombreTomo=$this->NombreTomo;
             $this->ValidarCantidad();
             $record->save();
+            $this->actualizarEstadoLibor();
             $this->resetInput();
             $this->dispatchBrowserEvent('cerrar');
-            session()->flash('message', 'Libro Actualizado Con Exito.');
-            $this->dispatchBrowserEvent('cerrar');
+            
+            $this->dispatchBrowserEvent('error', [
+                'type' => 'success',
+                'title' => 'Libro Actualizado Con Exito...',
+                'icon'=>'success',
+                
+            ]);
         }
     }
+
+
+
+    public function actualizarEstadoLibor(){
+
+        $libro = Libro::find($this->selected_id);
+
+        if($libro->TipoNovedad == 'Alta'){
+
+            $libro->Estado = 'NoDisponible';
+
+            $libro->save();
+
+        }elseif($libro->TipoNovedad == 'Media'){
+
+            $libro->Estado = 'Disponible';
+
+            $libro->save();
+
+        }elseif($libro->TipoNovedad == 'Ninguna'){
+
+            $libro->Estado = 'Disponible';
+
+            $libro->save();
+
+        }
+      }
 
     public function ValidarCantidad(){
         $cantidad = $this->CantidadLibros;
@@ -289,30 +474,67 @@ public function updated($validacionLibros)
             session()->flash('message', 'La cantidad no puede ser menor a 0.');
         }
     }
+    public function eliminar($id){
 
+        $this->selected_id = $id;
+        $libro = Libro::where('id',$id)->with('detalle_prestamo')->first();
+
+        
+        if($libro->detalle_prestamo == null ){
+            
+        $this->dispatchBrowserEvent('eliminar', [
+            'type' => 'warning',
+            'title' => '¿Estas Seguro De Inactivar El Libro?',
+            'id' => $id,
+            
+        ]);
+        }
+        elseif($libro->detalle_prestamo->count() >0 ){
+    
+        
+
+        $this->dispatchBrowserEvent('swal', [
+            'title' => 'No se puede Inactivar El Libro, tiene prestamos asociados.',
+            'icon'=>'error',
+            'iconColor'=>'red',
+        ]);
+      }
+        
+    }
 	public function destroy($id)
     {
 
+       
         $libro = Libro::find($id);
+
         $libro->Estado;
-        if ($libro->Estado == 'Disponible') {
+
+       
+        if ($libro->Estado == 'Disponible' ) {
             $libro->Estado = 'Inactivo';
 
             $libro->save();
             $libro->delete();
 
             $this->dispatchBrowserEvent('swal', [
-                'title' => 'Categoria Inactivada Con Exito..',
+                'title' => 'Libro Inactivado Con Exito..',
                 'icon' => 'info',
-                'iconColor' => 'blue',
+                
             ]);
-            session()->flash('AlertaPrestamoLibro', 'Libro Inactivado Con Exito.');
-        }elseif ($libro->Estado == 'Agotado' and $libro->Estado == 'Prestado'){
+           
+        }elseif($libro->Estado == 'NoDisponible'){
 
+            $libro->Estado = 'Inactivo';
 
+            $libro->save();
+            $libro->delete();
 
-        }else{
-            session()->flash('AlertaPrestamoLibro', 'Libro No Puede Ser Inactivado Porque actualmente tienen  prestamos realizados.');
+            $this->dispatchBrowserEvent('swal', [
+                'title' => 'Libro Inactivado Con Exito..',
+                'icon' => 'info',
+                
+            ]);
+
         }
 
 
@@ -324,16 +546,43 @@ public function updated($validacionLibros)
 
     public function restaurarLibro($id){
         $resLibro =Libro::onlyTrashed()->where('id', $id)->first();
-        if($resLibro->Estado == 'Inactivo'){
-            $resLibro->Estado = 'Disponible';
+        if($resLibro->Estado == 'Inactivo' and $resLibro->TipoNovedad =='Alta'){
+            $resLibro->Estado = 'NoDisponible';
 
 
             $resLibro->save();
+            $resLibro->restore();
+        $this->dispatchBrowserEvent('swal', [
+            'title' => 'Libro Restaurado  Con Exito..',
+            'icon' => 'success',
+            
+        ]);
+        }else{
+            $resLibro->Estado = 'Disponible';
+
+            
+            $resLibro->save();
+            $resLibro->restore();
+        $this->dispatchBrowserEvent('swal', [
+            'title' => 'Libro Restaurado  Con Exito..',
+            'icon' => 'success',
+            
+        ]);
         }
-        $resLibro->restore();
-        session()->flash('message', 'Libro Restaurado Con Exito.');
+        
+
     }
 
+
+    public function llamarModalEliminarLibro($id){
+        
+        $this->dispatchBrowserEvent('eliminarT', [
+            'type' => 'warning',
+            'title' => '¿Estas Seguro De Inactivar El Libro?',
+            'id' => $id,
+            
+        ]);
+          }
 
         //Elimina El Registro De La Base De Datos De Manera Definitiva
     public function eliminarLibroTotalMente($id){
@@ -341,34 +590,68 @@ public function updated($validacionLibros)
     $eliLibro =Libro::onlyTrashed()->where('id', $id)->first();
 
     $eliLibro->forceDelete();
-    session()->flash('message','Libro Eliminado Del Sistema');
+    
     }
 
     public function CargarDatosPrestamosLibros ($id){
 
         $libro = Libro::find($id);
-        $Consulta = Novedades::select('libros.id','libros.Nombre','novedades.Tipo_novedad','novedades.id','novedades.id_libros')
-            -> leftjoin('libros','novedades.id_libros','=','libros.id')->where('novedades.id_libros', '=', $id)
-            ->orderBy('novedades.id', 'desc')->first();
-        if($Consulta->Tipo_novedad == 'Baja' ){
-            if ($libro->Estado =='Disponible' ) {
+       
+        
+       
+            if ($libro->TipoNovedad =='Media' ) {
 
                 $prestamoLibrof = Libro::findOrFail($id);
+                $tomo = $prestamoLibrof -> NombreTomo;
                 $prestadorLibro = Auth::user()->name;
                 $this->nombreBibliotecario=$prestadorLibro;
                 $this->prestador_id = Auth::user()->id;
                 $this->selected_id = $id;
-                $this->nombreLibro = $prestamoLibrof -> Nombre;
+                $this->nombreLibro = $prestamoLibrof -> Nombre.$tomo;
+
+                $this->NovedadesF=$prestamoLibrof -> Novedades;
                 $this->cantidadDisponible = $prestamoLibrof -> CantidadLibros;
-                session()->flash('AlertaPrestamoLibro', 'Datos Cargados Con Exito.');
+              
+                $this->dispatchBrowserEvent('error', [
+                    'title' => 'El elemento Presenta Una Novedad Verifica Antes de Realizar El Prestamo. ',
+                    'icon'=>'info',
+                    
+                ]);
 
-            } else {
+            }elseif($libro->Estado =='NoDisponible'){
+                
 
-                session()->flash('AlertaPrestamoLibro', 'El Libro No Esta Disponible.');
 
-            }
-        }
+                $this->dispatchBrowserEvent('error', [
+                    'title' => 'No se puede prestar Actualmente Tiene una Novedad el Libro.',
+                    'icon'=>'error',
+                    'iconColor'=>'red',
+                ]);
+            }elseif($libro->Estado=='Agotado'){
 
+
+                $this->dispatchBrowserEvent('error', [
+                    'title' => 'No se puede prestar Actualmente el Libro se encuentra Agotado.',
+                    'icon'=>'info',
+                    
+                ]);
+            }elseif($libro->Estado == 'Disponible'){
+                $this->dispatchBrowserEvent('error', [
+                    'title' => 'Datos Cargados Con Exito .....',
+                    'icon'=>'success',  ]);
+                    $prestamoLibrof = Libro::findOrFail($id);
+                    $tomo = $prestamoLibrof -> NombreTomo;
+                    $prestadorLibro = Auth::user()->name;
+                    $this->nombreBibliotecario=$prestadorLibro;
+                    $this->prestador_id = Auth::user()->id;
+                    $this->selected_id = $id;
+                    $this->nombreLibro = $prestamoLibrof -> Nombre.$tomo;
+                    $this->NovedadesF=$prestamoLibrof -> Novedades;
+                    $this->cantidadDisponible = $prestamoLibrof -> CantidadLibros;
+                    
+              
+        
+   }
 
 
     }
@@ -422,8 +705,8 @@ public function updated($validacionLibros)
 
 
                 $arrayAgregaralatabla = array(
-                    'Fecha_prestamo'=>$this->FechaPrestamo,
-                    'NombreLibro '=>$this->nombreLibro,
+                   'NovedadesPrestamoU'=>$this->NovedadesF,
+                    'NombreLibro'=>$this->nombreLibro,
                     'id'=>   $this->selected_id,
                     'usuario_id'=>$this->nombreUsuario,
                     'Tipo_Elemento'=>$tipoel,
@@ -435,13 +718,14 @@ public function updated($validacionLibros)
 
 
                 );
+                
+
+               
+                $this->arrayAgregaralatabla[] = $arrayAgregaralatabla;
 
                 $this->ActualizarCantidadLibros();
                 $this->actualizarEstadoLibro();
                 $this->limpiarCamposPrestamo();
-                $this->arrayAgregaralatabla[] = $arrayAgregaralatabla;
-
-
 
 
                 /*
@@ -473,6 +757,24 @@ public function limpiarCamposPrestamo()
 		$this->cantidadDisponible= null;
 		$this->nombreBibliotecario= null;
 		$this->FechaPrestamo = null;
+       
+        $this->selected_id = null;
+        $this->prestador_id = null;
+       
+        $this->selected_id = null;
+		$this->Nombre =null;
+		$this->Autor = null;
+		$this->Editorial = null;
+		$this->Edicion = null;
+		$this->Descripcion = null;
+		$this->Estado = null;
+		$this->categoria_id = null;
+        $this->CantidadLibros= null;
+        $this->Novedades= null;
+        $this->NovedadesF = null;
+        $this->TipoNovedad= null;
+        $this->NombreTomo=null;
+
 
 
     }

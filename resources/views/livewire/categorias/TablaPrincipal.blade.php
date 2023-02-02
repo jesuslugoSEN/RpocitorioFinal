@@ -1,4 +1,12 @@
-<div class=" mt-3 ">
+
+
+
+
+
+
+
+
+<div class="card mt-3 ">
 
     <div class="card-header d-flex justify-content-between bg-white">
         <h4 class="text-center ">Tabla Gestion Generos Literarios Y categorias</h4>
@@ -15,13 +23,12 @@
 
 
     </div>
-    <div class="card-body  " style="height:60%">
-
+    <div class="card-body  ">
         <div class="table-responsive">
             <table class="table libros table-bordered table-sm">
                 <thead class="thead">
                     <tr>
-                        <td>#</td>
+                        <th>#</th>
                         <th>Nombre</th>
                         <th>Tipo</th>
                         <th>Descripción</th>
@@ -35,7 +42,7 @@
                 <tbody>
                     @forelse($categorias as $row)
                         <tr>
-                            <td>{{ $loop->iteration }}</td>
+                            <th>{{ $loop->iteration }}</th>
                             <td>{{ $row->nombre }}</td>
 
                             <td>{{ $row->Tipo }}</td>
@@ -71,8 +78,8 @@
                                     wire:click="editarCategoria({{ $row->id }})"></a>
 
                                 <a class="btn btn-danger  bi bi-trash3-fill  text-white m-1 "
-                                    onclick="confirm('Desea inactivar la categoria {{ $row->id }}? \n!Si No')||event.stopImmediatePropagation()"
-                                    wire:click="destroy({{ $row->id }})"></a>
+                                  
+                                    wire:click="eliminar ({{ $row->id }})"></a>
 
 
                                 <a data-bs-toggle="modal" data-bs-target="#verDetallesCategoria"
@@ -92,13 +99,13 @@
             </table>
             <div class="float-end">{{ $categorias->links() }}</div>
         </div>
+      
     </div>
 
 
 
 
-</div>
-<div>
-    @include('partials.footer')
 
 </div>
+</div>
+

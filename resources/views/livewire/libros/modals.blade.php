@@ -115,7 +115,7 @@
                 <div class="modal-footer  d-flex justify-content-center">
                     <button type="button" class="btn btn-danger close-btn text-white col-4"
                         data-bs-dismiss="modal">Cerrar</button>
-                    <button type="button" wire:click.prevent="store()"
+                    <button type="button" wire:click.prevent="store"
                         class="btn btn-warning text-white col-4">Guardar</button>
                 </div>
             </div>

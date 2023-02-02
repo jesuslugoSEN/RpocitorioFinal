@@ -477,6 +477,7 @@ public function limpiarCamposPrestamo()
 
     }
 
+
     public function actualizarEstadoLibro(){
         $librof = Libro::find($this->selected_id);
         if($librof->CantidadLibros > 0){
